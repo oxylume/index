@@ -38,6 +38,9 @@ func LoadConfig() (*Config, error) {
 		if !ok {
 			return nil, fmt.Errorf("unexpected DOMAIN_SOURCES item format %s, must be <address>;<zone>", raw)
 		}
+		if !strings.HasPrefix(zone, ".") {
+			return nil, fmt.Errorf("DOMAIN_SOURCES zone must begin with a \".\", got %q", zone)
+		}
 		addr, err := parseAddress(rawAddr)
 		if err != nil {
 			return nil, fmt.Errorf("invalid DOMAIN_SOURCES address %s: %w", rawAddr, err)
