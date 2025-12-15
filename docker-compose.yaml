@@ -1,0 +1,32 @@
+services:
+  index:
+    container_name: index
+    image: oxylume/index:latest
+    build:
+      context: .
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      DATABASE_URL: postgres://postgres@db:5432/tonsite?sslmode=disable
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+  db:
+    container_name: db
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: tonsite
+    volumes:
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: pg_isready -d tonsite -U postgres
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db-data:
