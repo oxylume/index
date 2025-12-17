@@ -1,5 +1,5 @@
 # oxylume index
-indexer service for TON sites. web frontend can be found [here](https://github.com/oxylume/web)
+indexer service for TON sites. official frontend can be found [here](https://github.com/oxylume/web)
 
 - collects TON domain
 - monitors uptime of active TON sites
@@ -12,49 +12,41 @@ docker image `oxylume/index` is available at [Docker Hub](https://hub.docker.com
 if you love this project and want to support its development you can donate on this TON address
 `ishoneypot.ton` or `UQA705AUWErQe9Ur56CZz-v6N9J2uw298w-31ZCu475hT8U4`
 
-## quick start
-create `docker-compose.yaml` file
+## prerequisites
+- Docker
+- Go 1.25+ (for build only)
 
-change [environment variables](#environment-variables) if required (defaults work fine)
-```yaml
-services:
-  index:
-    image: oxylume/index:latest
-    restart: unless-stopped
-    ports:
-      - 80:8081
-    environment:
-      DATABASE_URL: postgres://postgres@db:5432/tonsite?sslmode=disable
-    depends_on:
-      db:
-        condition: service_healthy
-        restart: true
-  db:
-    image: postgres:18
-    restart: unless-stopped
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_DB: tonsite
-    volumes:
-      - ./postgres:/var/lib/postgresql
-    healthcheck:
-      test: pg_isready -d tonsite -U postgres
-      interval: 10s
-      timeout: 5s
-      retries: 5
+## usage
+### quick start
+[download](/docker-compose.yaml) `docker-compose.yaml` file
+```bash
+wget https://raw.githubusercontent.com/oxylume/mylocalton/refs/heads/main/.env
 ```
+modify [environment variables](#environment-variables) if required (defaults work fine)
 
 start services
 ```bash
 docker compose up
 ```
 
-### setup & run
-#### prerequisites
-- Go 1.25+
-- Docker
+now you can [send requests](#endpoints) to API, for instance, let's grab current statistics for TON sites
+```bash
+curl http://localhost:8081/sites/stats
+```
 
-#### start db
+## build from sources
+build docker image
+```bash
+docker compose build
+```
+
+or build an executable
+```bash
+go build -o main ./cmd/api
+```
+the executable depends on `./migrations/` directory to run migrations on start up
+
+## run from sources
 start postgresql database using docker (or do it without docker but that's on you)
 ```bash
 docker run --rm \
@@ -66,15 +58,9 @@ docker run --rm \
 ```
 database migrations are stored in the `./migrations/` directory and run by the app on start up
 
-#### start app
-run as package
+run the program
 ```bash
 go run ./cmd/api
-```
-
-or build an executable
-```bash
-go build -o main ./cmd/api
 ```
 
 ## environment variables
@@ -83,11 +69,12 @@ go build -o main ./cmd/api
 | `BIND_ADDRESS` | :8081 | listen address to accept incoming http requests
 | `DATABASE_URL` | postgres://postgres@localhost:5432/tonsite?sslmode=disable | postgresql connection url
 | `TON_CONFIG_URL` | https://ton.org/global-config.json | json config containing lite servers and dht nodes
-| `BAG_TTL` | 3600 | seconds until evicting stale ton storage bag from a cache (stale means not used for a period of time)
-| `GATEWAY_ENABLED` | 1 | enables gateway to serve TON network resources using subdomain resolution. setting it to `0` will disable the gateway
+| `BAG_TTL` | 3600 | seconds until evicting stale ton storage bags from a cache (stale means not used for a period of time)
+| `GATEWAY_ENABLED` | 1 | enables a gateway to serve TON network resources using subdomain resolution. setting it to `0` will disable the gateway
 | `DOMAIN_SOURCES` | EQC3dNlesgVD8YbAazcauIrXBPfiVhMMr5YYk2in0Mtsz0Bz;.ton,EQCA14o1-VWhS2efqoh_9M1b_A9DtKTuoqfmkn83AbJzwnPi;.t.me | domain sources must adhere to [TEP-62](https://github.com/ton-blockchain/TEPs/blob/master/text/0062-nft-standard.md) and [TEP-81](https://github.com/ton-blockchain/TEPs/blob/master/text/0081-dns-standard.md). format is comma-separated list of `<collection_address>;<domain_zone>`, domain zone must start with a dot
 | `TONCENTER_URL` | https://toncenter.com/api | toncenter base api url
-| `TONCENTER_KEY` | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you have 1 rps which is totally ok but providing the key can slightly speed up crawling process)
+| `TONCENTER_KEY` | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you get 1 rps, which is totally ok, but providing the key can slightly speed up the crawling process)
 
 ## endpoints
 TBA
+

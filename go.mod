@@ -2,6 +2,11 @@ module github.com/oxylume/index
 
 go 1.25.1
 
+ignore (
+	migrations
+	temp
+)
+
 require (
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/jackc/pgx/v5 v5.7.6
