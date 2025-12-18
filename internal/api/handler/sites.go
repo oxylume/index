@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	maxLimit = 100
+	maxLimit = 1000
 )
 
 type getStatsResponse struct {
@@ -30,11 +30,6 @@ type siteResponse struct {
 	InStorage    bool   `json:"inStorage"`
 	SpamContent  bool   `json:"spamContent"`
 	CheckedUtime int64  `json:"checkedUtime"`
-}
-
-var allowedZones = map[string]struct{}{
-	".ton":  {},
-	".t.me": {},
 }
 
 var allowedSortBy = map[db.SortBy]struct{}{
@@ -79,7 +74,7 @@ func (h *Handler) GetSites(w http.ResponseWriter, r *http.Request) {
 		params.Spam = v
 	}
 	if v := query.Get("zone"); v != "" {
-		if _, ok := allowedZones[v]; !ok {
+		if _, ok := h.zones[v]; !ok {
 			http.Error(w, fmt.Sprintf("invalid zone %s", v), http.StatusBadRequest)
 			return
 		}

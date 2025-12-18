@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+var specialNamespaces = []string{".adnl.", ".bag."}
+
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -19,13 +21,18 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func (h *Handler) gatewayMiddleware(next http.Handler) http.Handler {
+	namespaces := make([]string, 0, len(h.zones)+len(specialNamespaces))
+	for zone := range h.zones {
+		namespaces = append(namespaces, zone+".")
+	}
+	namespaces = append(namespaces, specialNamespaces...)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		for _, namespace := range h.namespaces {
+		for _, namespace := range namespaces {
 			i := strings.Index(r.Host, namespace)
 			if i < 0 {
 				continue
 			}
-			r.Host = strings.TrimSuffix(r.Host[:i+len(namespace)], ".")
+			r.Host = r.Host[:i+len(namespace)-1]
 			h.ServeGateway(w, r)
 			return
 		}

@@ -9,29 +9,25 @@ import (
 	"github.com/xssnick/tonutils-go/ton/dns"
 )
 
-var specialNamespaces = []string{".adnl.", ".bag."}
-
 type Handler struct {
-	dns        *dns.Client
-	bags       *proxy.BagProvider
-	rldp       *proxy.RLDPConnector
-	sites      *db.SitesStore
-	namespaces []string
+	dns   *dns.Client
+	bags  *proxy.BagProvider
+	rldp  *proxy.RLDPConnector
+	sites *db.SitesStore
+	zones map[string]struct{}
 }
 
 func NewHandler(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnector, sites *db.SitesStore, zones []string) *Handler {
-	namespaces := make([]string, len(zones), len(zones)+len(specialNamespaces))
-	for i, zone := range zones {
-		namespaces[i] = zone + "."
+	zonesMap := make(map[string]struct{}, len(zones))
+	for _, zone := range zones {
+		zonesMap[zone] = struct{}{}
 	}
-	namespaces = append(namespaces, specialNamespaces...)
-
 	return &Handler{
-		dns:        dns,
-		bags:       bags,
-		rldp:       rldp,
-		sites:      sites,
-		namespaces: namespaces,
+		dns:   dns,
+		bags:  bags,
+		rldp:  rldp,
+		sites: sites,
+		zones: zonesMap,
 	}
 }
 

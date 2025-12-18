@@ -76,5 +76,57 @@ go run ./cmd/api
 | `TONCENTER_KEY` | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you get 1 rps, which is totally ok, but providing the key can slightly speed up the crawling process)
 
 ## endpoints
-TBA
+### GET /sites/stats
+Get statistics about indexed TON sites
+**response**
+```json
+{
+    "domains": 420,
+    "sites": 69,
+    "active": 25
+}
+```
 
+### GET /sites/random
+Get data about a random indexed site
+**response**
+```json
+{
+    "domain": "ishoneypot.ton",
+    "unicode": "ishoneypot.ton",
+    "accessible": true,
+    "inStorage": false,
+    "spamContent": false,
+    "checkedUtime": 1765998574
+}
+```
+
+### GET /sites
+List filtered data about indexed sites
+| query | type | note |
+| --- | --- | --- |
+| `search` | `string` | search term
+| `inaccessible` | `bool` | include inaccessible sites
+| `punycode` | `bool?` | show only (`true`) or exclude (`false`) punycode domains
+| `spam` | `bool` | include sites with a potentially spam content
+| `zone` | `string` | show sites only from a specified domain zone defined by `DOMAIN_SOURCES` env var
+| `sort` | `string` | sort field. allowed values:<br> - `domain` (lexicographical)<br> `checked_at`
+| `desc` | `bool` | sort in descending order
+| `cursor` | `string` | opaque cursor to list the next batch of sites
+| `limit` | `int` | maximum number of sites to return. default `50`. max `1000`
+**response**
+```json
+{
+    "sites": [
+        {
+            "domain": "ishoneypot.ton",
+            "unicode": "ishoneypot.ton",
+            "accessible": true,
+            "inStorage": false,
+            "spamContent": false,
+            "checkedUtime": 1766013291
+        }
+    ],
+    "cursor": "MDEyMy50b24="
+}
+```
