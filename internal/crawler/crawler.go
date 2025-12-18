@@ -14,6 +14,10 @@ import (
 	"golang.org/x/net/idna"
 )
 
+const (
+	noNewDelay = 10 * time.Second
+)
+
 type DomainSource struct {
 	Address *address.Address
 	Zone    string
@@ -43,7 +47,7 @@ func NewCrawler(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnec
 func (c *Crawler) Start(ctx context.Context, sources []*DomainSource) error {
 	ctx, c.closer = context.WithCancel(ctx)
 	for _, src := range sources {
-		offset, err := c.state.GetOffset(ctx, src.Address.Data())
+		offset, err := c.state.GetOffset(ctx, src.Address.StringRaw())
 		if err != nil {
 			c.closer()
 			return fmt.Errorf("unable to get crawler offset for %s: %w", src.Address.String(), err)
@@ -62,7 +66,6 @@ func (c *Crawler) Close() {
 func (c *Crawler) worker(ctx context.Context, src *DomainSource, offset int) {
 	const limit = 500
 	srcAddr := src.Address.StringRaw()
-	srcHash := src.Address.Data()
 	for {
 		if ctx.Err() != nil {
 			return
@@ -73,6 +76,11 @@ func (c *Crawler) worker(ctx context.Context, src *DomainSource, offset int) {
 			continue
 		}
 		if len(nfts) == 0 {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(noNewDelay):
+			}
 			continue
 		}
 		sites := make([]db.SiteCreate, 0, len(nfts))
@@ -80,6 +88,11 @@ func (c *Crawler) worker(ctx context.Context, src *DomainSource, offset int) {
 			domain := nft.Content.Domain
 			if domain == "" {
 				log.Printf("[CRAWLER] nft %s is missing a domain", nft.Address)
+				continue
+			}
+			addr, err := address.ParseRawAddr(nft.Address)
+			if err != nil {
+				log.Printf("[CRAWLER] unable to parse address %s", addr)
 				continue
 			}
 			unicode, err := idna.Punycode.ToUnicode(domain)
@@ -91,22 +104,17 @@ func (c *Crawler) worker(ctx context.Context, src *DomainSource, offset int) {
 				Domain:  domain,
 				Unicode: unicode,
 				Zone:    src.Zone,
+				Address: addr.StringRaw(),
 			})
 		}
 		if err := c.sites.AddDomains(ctx, sites...); err != nil {
 			log.Printf("[CRAWLER] unable to register domains: %v", err)
 			continue
 		}
-		if err := c.state.SetOffset(ctx, srcHash, offset+len(nfts)); err != nil {
+		if err := c.state.SetOffset(ctx, srcAddr, offset+len(nfts)); err != nil {
 			log.Printf("[CRAWLER] unable to save offset: %v", err)
 			continue
 		}
 		offset += len(nfts)
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(500 * time.Millisecond):
-		}
 	}
 }

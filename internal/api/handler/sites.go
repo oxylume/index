@@ -26,6 +26,7 @@ type getSitesResponse struct {
 type siteResponse struct {
 	Domain       string `json:"domain"`
 	Unicode      string `json:"unicode"`
+	Address      string `json:"address"`
 	Accessible   bool   `json:"accessible"`
 	InStorage    bool   `json:"inStorage"`
 	SpamContent  bool   `json:"spamContent"`
@@ -137,6 +138,7 @@ func siteToResponse(site db.Site) siteResponse {
 	return siteResponse{
 		Domain:       site.Domain,
 		Unicode:      site.Unicode,
+		Address:      site.Address,
 		Accessible:   site.Status == db.StatusAccessible,
 		InStorage:    site.InStorage,
 		SpamContent:  site.SpamContent,

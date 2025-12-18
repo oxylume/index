@@ -45,11 +45,13 @@ type SiteCreate struct {
 	Domain  string
 	Unicode string
 	Zone    string
+	Address string
 }
 
 type Site struct {
 	Domain      string
 	Unicode     string
+	Address     string
 	Status      SiteStatus
 	InStorage   bool
 	SpamContent bool
@@ -93,14 +95,14 @@ func (r *SitesStore) GetStats(ctx context.Context) (*Stats, error) {
 
 func (r *SitesStore) GetRandomSite(ctx context.Context) (*Site, error) {
 	const sql = `
-	select domain, unicode, status, in_storage, spam_content, checked_at from sites
+	select domain, unicode, address, status, in_storage, spam_content, checked_at from sites
 	where status = $1 and spam_content = false
 	order by random()
 	limit 1
 	`
 	var s Site
 	err := r.db.QueryRow(ctx, sql, StatusAccessible).Scan(
-		&s.Domain, &s.Unicode, &s.Status, &s.InStorage, &s.SpamContent, &s.CheckedAt)
+		&s.Domain, &s.Unicode, &s.Address, &s.Status, &s.InStorage, &s.SpamContent, &s.CheckedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +123,7 @@ func (r *SitesStore) List(ctx context.Context, params *ListFilters, cursor *Curs
 			break
 		}
 		var s Site
-		if err := rows.Scan(&s.Domain, &s.Unicode, &s.Status, &s.InStorage, &s.SpamContent, &s.CheckedAt); err != nil {
+		if err := rows.Scan(&s.Domain, &s.Unicode, &s.Address, &s.Status, &s.InStorage, &s.SpamContent, &s.CheckedAt); err != nil {
 			return nil, nil, err
 		}
 		sites = append(sites, s)
@@ -210,26 +212,28 @@ func (r *SitesStore) IsBanned(ctx context.Context, domain string) (bool, error) 
 
 func (r *SitesStore) AddDomains(ctx context.Context, sites ...SiteCreate) error {
 	const sql = `
-	insert into sites (domain, unicode, zone)
-	select * from unnest($1::text[], $2::text[], $3::text[])
+	insert into sites (domain, unicode, zone, address)
+	select * from unnest($1::text[], $2::text[], $3::text[], $4::text[])
 	on conflict (domain) do nothing
 	`
 	domains := make([]string, len(sites))
 	unicodes := make([]string, len(sites))
 	zones := make([]string, len(sites))
+	addresses := make([]string, len(sites))
 
 	for i, site := range sites {
 		domains[i] = site.Domain
 		unicodes[i] = site.Unicode
 		zones[i] = site.Zone
+		addresses[i] = site.Address
 	}
-	_, err := r.db.Exec(ctx, sql, domains, unicodes, zones)
+	_, err := r.db.Exec(ctx, sql, domains, unicodes, zones, addresses)
 	return err
 }
 
 func buildListQuery(params *ListFilters, cursor *Cursor, limit int) (string, []any) {
 	const baseSql = `
-	select domain, unicode, status, in_storage, spam_content, checked_at from sites
+	select domain, unicode, address, status, in_storage, spam_content, checked_at from sites
 	%s
 	order by %s
 	limit $%d

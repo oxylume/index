@@ -18,7 +18,7 @@ func NewCrawlerStore(db *pgxpool.Pool) *CrawlerStore {
 	}
 }
 
-func (r *CrawlerStore) GetOffset(ctx context.Context, dns []byte) (int, error) {
+func (r *CrawlerStore) GetOffset(ctx context.Context, dns string) (int, error) {
 	const sql = `
 	select last_offset from crawler_state
 	where dns = $1
@@ -31,7 +31,7 @@ func (r *CrawlerStore) GetOffset(ctx context.Context, dns []byte) (int, error) {
 	return offset, err
 }
 
-func (r *CrawlerStore) SetOffset(ctx context.Context, dns []byte, offset int) error {
+func (r *CrawlerStore) SetOffset(ctx context.Context, dns string, offset int) error {
 	const sql = `
 	insert into crawler_state (dns, last_offset)
 	values ($1, $2)
