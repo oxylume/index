@@ -78,6 +78,7 @@ go run ./cmd/api
 ## endpoints
 ### GET /sites/stats
 Get statistics about indexed TON sites
+
 **response**
 ```json
 {
@@ -89,6 +90,7 @@ Get statistics about indexed TON sites
 
 ### GET /sites/random
 Get data about a random indexed site
+
 **response**
 ```json
 {
@@ -110,10 +112,11 @@ List filtered data about indexed sites
 | `punycode` | `bool?` | show only (`true`) or exclude (`false`) punycode domains
 | `spam` | `bool` | include sites with a potentially spam content
 | `zone` | `string` | show sites only from a specified domain zone defined by `DOMAIN_SOURCES` env var
-| `sort` | `string` | sort field. allowed values:<br> - `domain` (lexicographical)<br> `checked_at`
+| `sort` | `string` | sort field. allowed values:<br> - `domain` (lexicographical)<br> - `checked_at`
 | `desc` | `bool` | sort in descending order
 | `cursor` | `string` | opaque cursor to list the next batch of sites
 | `limit` | `int` | maximum number of sites to return. default `50`. max `1000`
+
 **response**
 ```json
 {
