@@ -20,7 +20,7 @@ if you love this project and want to support its development you can donate on t
 ### quick start
 [download](/docker-compose.yaml) `docker-compose.yaml` file
 ```bash
-wget https://raw.githubusercontent.com/oxylume/mylocalton/refs/heads/main/.env
+wget https://raw.githubusercontent.com/oxylume/index/refs/heads/main/docker-compose.yaml
 ```
 modify [environment variables](#environment-variables) if required (defaults work fine)
 
