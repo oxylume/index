@@ -106,7 +106,7 @@ func main() {
 	crawler := crawler.NewCrawler(dnsClient, bags, rldp, sites, crawlerState, tcClient)
 	crawler.Start(ctx, cfg.DomainSources)
 	defer crawler.Close()
-	checker := checker.NewChecker(dnsClient, bags, rldp, sites, 2*time.Hour)
+	checker := checker.NewChecker(dnsClient, bags, rldp, sites, cfg.CheckInterval)
 	checker.Start(ctx, 100)
 	defer checker.Close()
 

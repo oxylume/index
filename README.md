@@ -76,6 +76,7 @@ go run ./cmd/api
 | `DATABASE_URL`   | postgres://postgres@localhost:5432/tonsite?sslmode=disable | postgresql connection url
 | `TON_CONFIG_URL` | https://ton.org/global-config.json | json config containing lite servers and dht nodes
 | `BAG_TTL`        | 3600 | seconds until evicting stale ton storage bags from a cache (stale means not used for a period of time)
+| `CHECK_INTERVAL` | 7200 | seconds until a site need to be checked again
 | `DOMAIN_SOURCES` | EQC3dNlesgVD8YbAazcauIrXBPfiVhMMr5YYk2in0Mtsz0Bz;.ton,EQCA14o1-VWhS2efqoh_9M1b_A9DtKTuoqfmkn83AbJzwnPi;.t.me | domain sources must adhere to [TEP-62](https://github.com/ton-blockchain/TEPs/blob/master/text/0062-nft-standard.md) and [TEP-81](https://github.com/ton-blockchain/TEPs/blob/master/text/0081-dns-standard.md). format is comma-separated list of `<collection_address>;<domain_zone>`, domain zone must start with a dot
 | `TONCENTER_URL`  | https://toncenter.com/api | toncenter base api url
 | `TONCENTER_KEY`  | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you get 1 rps, which is totally ok, but providing the key can slightly speed up the crawling process)

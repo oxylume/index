@@ -12,7 +12,11 @@ import (
 	"github.com/xssnick/tonutils-go/address"
 )
 
-const defaultBagTTL = 3600 // 1 hour
+const (
+	defaultBagTTL        = 3600 // 1 hour
+	defaultCheckInterval = 7200 // 2 hours
+)
+
 // todo: automatically resolve domain zone of passed source
 var defaultDomainSrc = []string{
 	"EQC3dNlesgVD8YbAazcauIrXBPfiVhMMr5YYk2in0Mtsz0Bz;.ton",  // .ton dns
@@ -25,6 +29,7 @@ type Config struct {
 	TonConfigUrl  string
 	BagTTL        time.Duration
 	DatabaseUrl   string
+	CheckInterval time.Duration
 	ToncenterUrl  string
 	ToncenterKey  string
 	DomainSources []*crawler.DomainSource
@@ -56,6 +61,7 @@ func LoadConfig() (*Config, error) {
 		TonConfigUrl:  getEnv("TON_CONFIG_URL", "https://ton.org/global-config.json"),
 		BagTTL:        time.Duration(getEnvInt("BAG_TTL", defaultBagTTL)) * time.Second,
 		DatabaseUrl:   getEnv("DATABASE_URL", "postgres://postgres@localhost:5432/tonsite?sslmode=disable"),
+		CheckInterval: time.Duration(getEnvInt("CHECK_INTERVAL", defaultCheckInterval)) * time.Second,
 		ToncenterUrl:  getEnv("TONCENTER_URL", "https://toncenter.com/api"),
 		ToncenterKey:  getEnv("TONCENTER_KEY", ""),
 		DomainSources: sources,

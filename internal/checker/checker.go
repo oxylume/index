@@ -19,24 +19,22 @@ const sniffSize = 512
 const timeout = 16 * time.Second
 const hold = timeout + timeout/4
 
-var errSpamContent = errors.New("contains spam content")
-
 type Checker struct {
-	dns    *dns.Client
-	bags   *proxy.BagProvider
-	rldp   *proxy.RLDPConnector
-	sites  *db.SitesStore
-	stale  time.Duration
-	closer context.CancelFunc
+	dns           *dns.Client
+	bags          *proxy.BagProvider
+	rldp          *proxy.RLDPConnector
+	sites         *db.SitesStore
+	checkInterval time.Duration
+	closer        context.CancelFunc
 }
 
-func NewChecker(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnector, sites *db.SitesStore, stale time.Duration) *Checker {
+func NewChecker(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnector, sites *db.SitesStore, checkInterval time.Duration) *Checker {
 	return &Checker{
-		dns:   dns,
-		bags:  bags,
-		rldp:  rldp,
-		sites: sites,
-		stale: stale,
+		dns:           dns,
+		bags:          bags,
+		rldp:          rldp,
+		sites:         sites,
+		checkInterval: checkInterval,
 	}
 }
 
@@ -76,7 +74,7 @@ func (c *Checker) reserver(ctx context.Context, domainsC chan<- string, reserveB
 		if ctx.Err() != nil {
 			return
 		}
-		sites, err := c.sites.ReserveCheck(ctx, c.stale, hold, reserveBatch)
+		sites, err := c.sites.ReserveCheck(ctx, c.checkInterval, hold, reserveBatch)
 		if err != nil {
 			if !errors.Is(err, context.Canceled) {
 				log.Printf("[CHECKER]: failed to get expired sites: %v", err)
@@ -118,14 +116,6 @@ func (c *Checker) check(ctx context.Context, domain string) (db.SiteStatus, bool
 	}
 	return db.StatusAccessible, inStorage, containsSpamContent(data)
 }
-
-// func (c *Checker) validateContent(data []byte) error {
-// 	mimeType := http.DetectContentType(data)
-// 	if !strings.HasPrefix(mimeType, "text/html") {
-// 		return fmt.Errorf("invalid mime %s", mimeType)
-// 	}
-// 	return nil
-// }
 
 func (c *Checker) getSiteData(ctx context.Context, domain string, id []byte, inStorage bool) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
