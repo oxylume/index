@@ -9,37 +9,44 @@ import (
 	"github.com/xssnick/tonutils-go/ton/dns"
 )
 
+var specialNamespaces = []string{".adnl.", ".bag."}
+
 type Handler struct {
-	dns   *dns.Client
-	bags  *proxy.BagProvider
-	rldp  *proxy.RLDPConnector
-	sites *db.SitesStore
-	zones map[string]struct{}
+	dns        *dns.Client
+	bags       *proxy.BagProvider
+	rldp       *proxy.RLDPConnector
+	sites      *db.SitesStore
+	zones      map[string]struct{}
+	namespaces []string
 }
 
 func NewHandler(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnector, sites *db.SitesStore, zones []string) *Handler {
 	zonesMap := make(map[string]struct{}, len(zones))
+	namespaces := make([]string, 0, len(zones)+len(specialNamespaces))
 	for _, zone := range zones {
 		zonesMap[zone] = struct{}{}
+		namespaces = append(namespaces, zone+".")
 	}
+	namespaces = append(namespaces, specialNamespaces...)
 	return &Handler{
-		dns:   dns,
-		bags:  bags,
-		rldp:  rldp,
-		sites: sites,
-		zones: zonesMap,
+		dns:        dns,
+		bags:       bags,
+		rldp:       rldp,
+		sites:      sites,
+		zones:      zonesMap,
+		namespaces: namespaces,
 	}
 }
 
-func (h *Handler) HttpHandler(mux *http.ServeMux, enableGateway bool) http.Handler {
+func (h *Handler) ApiHandler(mux *http.ServeMux) http.Handler {
 	mux.HandleFunc("GET /sites/stats", h.GetStats)
 	mux.HandleFunc("GET /sites/random", h.GetRandomSite)
 	mux.HandleFunc("GET /sites", h.GetSites)
-	handler := mux
-	if enableGateway {
-		h.gatewayMiddleware(handler)
-	}
-	return corsMiddleware(handler)
+	return corsMiddleware(mux)
+}
+
+func (h *Handler) GatewayHandler() http.Handler {
+	return corsMiddleware(http.HandlerFunc(h.ServeGateway))
 }
 
 func writeJson(w http.ResponseWriter, response any) {

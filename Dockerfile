@@ -12,5 +12,6 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /app/main /main
 COPY migrations/ /migrations
 EXPOSE 8081
+EXPOSE 8082
 ENTRYPOINT ["/main"]
 

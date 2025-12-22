@@ -27,9 +27,13 @@ var hopHeaders = map[string]struct{}{
 	"Upgrade":             {},
 }
 
-// r.Host must be set to canonical TON domain or special case (.adnl, .bag) before calling this function, like "example.ton"
 func (h *Handler) ServeGateway(w http.ResponseWriter, r *http.Request) {
-	id, inStorage, err := h.resolve(r.Context(), r.Host)
+	realHost, ok := h.resolveRealHost(r.Host)
+	if !ok {
+		http.Error(w, "provide valid TON network resource identifier as a subdomain", http.StatusBadRequest)
+		return
+	}
+	id, inStorage, err := h.resolve(r.Context(), realHost)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -105,10 +109,10 @@ func (h *Handler) ServeGateway(w http.ResponseWriter, r *http.Request) {
 		rldpReq := &proxy.Request{
 			Id:      queryId,
 			Method:  r.Method,
-			Url:     fmt.Sprintf("http://%s%s", r.Host, r.URL.Path),
+			Url:     fmt.Sprintf("http://%s%s", realHost, r.URL.Path),
 			Version: "HTTP/1.1",
 			Headers: []proxy.Header{
-				{Name: "Host", Value: r.Host},
+				{Name: "Host", Value: realHost},
 			},
 		}
 
@@ -139,6 +143,17 @@ func (h *Handler) ServeGateway(w http.ResponseWriter, r *http.Request) {
 		}
 		io.Copy(w, body)
 	}
+}
+
+func (h *Handler) resolveRealHost(host string) (string, bool) {
+	for _, namespace := range h.namespaces {
+		i := strings.Index(host, namespace)
+		if i < 0 {
+			continue
+		}
+		return host[:i+len(namespace)-1], true
+	}
+	return "", false
 }
 
 func (h *Handler) resolve(ctx context.Context, host string) (id []byte, inStorage bool, err error) {

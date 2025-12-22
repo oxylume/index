@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os/signal"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -117,13 +118,23 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	srv := &http.Server{
-		Addr:    cfg.BindAddress,
-		Handler: handler.HttpHandler(mux, true),
+	apiServer := &http.Server{
+		Addr:    cfg.ApiListen,
+		Handler: handler.ApiHandler(mux),
 	}
 	go func() {
-		log.Printf("[SERVER] now listening on %s", srv.Addr) // actually no but im too lazy to separate listen and serve
-		if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("[SERVER] api is now listening on %s", apiServer.Addr) // actually no but im too lazy to separate listen and serve
+		if err := apiServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("[SERVER] fatal error: %v", err)
+		}
+	}()
+	gatewayServer := &http.Server{
+		Addr:    cfg.GatewayListen,
+		Handler: handler.GatewayHandler(),
+	}
+	go func() {
+		log.Printf("[SERVER] gateway is now listening on %s", gatewayServer.Addr)
+		if err := gatewayServer.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("[SERVER] fatal error: %v", err)
 		}
 	}()
@@ -132,9 +143,17 @@ func main() {
 	log.Print("[SERVER] shutting down...")
 	shutdownCtx, shutdownCtxStop := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCtxStop()
-	if err := srv.Shutdown(shutdownCtx); err != nil {
-		log.Printf("[SERVER] unable to gracefully shut down: %v", err)
-		return
-	}
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		if err := apiServer.Shutdown(shutdownCtx); err != nil {
+			log.Printf("[SERVER] unable to gracefully shut down api server: %v", err)
+		}
+	})
+	wg.Go(func() {
+		if err := gatewayServer.Shutdown(shutdownCtx); err != nil {
+			log.Printf("[SERVER] unable to gracefully shut down gateway server: %v", err)
+		}
+	})
+	wg.Wait()
 	log.Printf("[SERVER] bye bye")
 }

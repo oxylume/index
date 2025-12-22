@@ -20,14 +20,14 @@ var defaultDomainSrc = []string{
 }
 
 type Config struct {
-	BindAddress    string
-	TonConfigUrl   string
-	BagTTL         time.Duration
-	GatewayEnabled bool
-	DatabaseUrl    string
-	ToncenterUrl   string
-	ToncenterKey   string
-	DomainSources  []*crawler.DomainSource
+	ApiListen     string
+	GatewayListen string
+	TonConfigUrl  string
+	BagTTL        time.Duration
+	DatabaseUrl   string
+	ToncenterUrl  string
+	ToncenterKey  string
+	DomainSources []*crawler.DomainSource
 }
 
 func LoadConfig() (*Config, error) {
@@ -51,14 +51,14 @@ func LoadConfig() (*Config, error) {
 		}
 	}
 	return &Config{
-		BindAddress:    getEnv("BIND_ADDRESS", ":8081"),
-		TonConfigUrl:   getEnv("TON_CONFIG_URL", "https://ton.org/global-config.json"),
-		BagTTL:         time.Duration(getEnvInt("BAG_TTL", defaultBagTTL)) * time.Second,
-		GatewayEnabled: getEnv("GATEWAY_ENABLED", "1") != "0",
-		DatabaseUrl:    getEnv("DATABASE_URL", "postgres://postgres@localhost:5432/tonsite?sslmode=disable"),
-		ToncenterUrl:   getEnv("TONCENTER_URL", "https://toncenter.com/api"),
-		ToncenterKey:   getEnv("TONCENTER_KEY", ""),
-		DomainSources:  sources,
+		ApiListen:     getEnv("API_LISTEN", ":8081"),
+		GatewayListen: getEnv("GATEWAY_LISTEN", ":8082"),
+		TonConfigUrl:  getEnv("TON_CONFIG_URL", "https://ton.org/global-config.json"),
+		BagTTL:        time.Duration(getEnvInt("BAG_TTL", defaultBagTTL)) * time.Second,
+		DatabaseUrl:   getEnv("DATABASE_URL", "postgres://postgres@localhost:5432/tonsite?sslmode=disable"),
+		ToncenterUrl:  getEnv("TONCENTER_URL", "https://toncenter.com/api"),
+		ToncenterKey:  getEnv("TONCENTER_KEY", ""),
+		DomainSources: sources,
 	}, nil
 }
 

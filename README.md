@@ -4,7 +4,7 @@ indexer service for TON sites. official frontend can be found [here](https://git
 - collects TON domain
 - monitors uptime of active TON sites
 - provides data about TON sites
-- provides TON network gateway using subdomain resolution for domains (.ton, .t.me and etc), bags (.bag) and ADNL (.adnl)
+- provides TON network gateway using subdomain resolution for domains, bags (.bag) and ADNL (.adnl)
 
 docker image `oxylume/index` is available at [Docker Hub](https://hub.docker.com/r/oxylume/index)
 
@@ -29,9 +29,14 @@ start services
 docker compose up
 ```
 
-now you can [send requests](#endpoints) to API, for instance, let's grab current statistics for TON sites
+access [the api](#endpoints)
 ```bash
 curl http://localhost:8081/sites/stats
+```
+
+access TON site via the gateway
+```bash
+curl http://ishoneypot.ton.localhost:8082
 ```
 
 ## build from sources
@@ -64,19 +69,19 @@ go run ./cmd/api
 ```
 
 ## environment variables
-| name | default | note |
-| --- | --- | --- |
-| `BIND_ADDRESS` | :8081 | listen address to accept incoming http requests
-| `DATABASE_URL` | postgres://postgres@localhost:5432/tonsite?sslmode=disable | postgresql connection url
+| name             | default | note |
+| ---------------- | ------- | ---- |
+| `API_LISTEN`     | :8081 | listen address for the api server
+| `GATEWAY_LISTEN` | :8082 | listen address for the gateway server
+| `DATABASE_URL`   | postgres://postgres@localhost:5432/tonsite?sslmode=disable | postgresql connection url
 | `TON_CONFIG_URL` | https://ton.org/global-config.json | json config containing lite servers and dht nodes
-| `BAG_TTL` | 3600 | seconds until evicting stale ton storage bags from a cache (stale means not used for a period of time)
-| `GATEWAY_ENABLED` | 1 | enables a gateway to serve TON network resources using subdomain resolution. setting it to `0` will disable the gateway
+| `BAG_TTL`        | 3600 | seconds until evicting stale ton storage bags from a cache (stale means not used for a period of time)
 | `DOMAIN_SOURCES` | EQC3dNlesgVD8YbAazcauIrXBPfiVhMMr5YYk2in0Mtsz0Bz;.ton,EQCA14o1-VWhS2efqoh_9M1b_A9DtKTuoqfmkn83AbJzwnPi;.t.me | domain sources must adhere to [TEP-62](https://github.com/ton-blockchain/TEPs/blob/master/text/0062-nft-standard.md) and [TEP-81](https://github.com/ton-blockchain/TEPs/blob/master/text/0081-dns-standard.md). format is comma-separated list of `<collection_address>;<domain_zone>`, domain zone must start with a dot
-| `TONCENTER_URL` | https://toncenter.com/api | toncenter base api url
-| `TONCENTER_KEY` | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you get 1 rps, which is totally ok, but providing the key can slightly speed up the crawling process)
+| `TONCENTER_URL`  | https://toncenter.com/api | toncenter base api url
+| `TONCENTER_KEY`  | - | optional toncenter api key [@tonapibot](https://t.me/tonapibot) (without the key you get 1 rps, which is totally ok, but providing the key can slightly speed up the crawling process)
 
 ## endpoints
-### GET /sites/stats
+### GET `/sites/stats`
 Get statistics about indexed TON sites
 
 **response**
@@ -88,7 +93,7 @@ Get statistics about indexed TON sites
 }
 ```
 
-### GET /sites/random
+### GET `/sites/random`
 Get data about a random indexed site
 
 **response**
@@ -96,6 +101,7 @@ Get data about a random indexed site
 {
     "domain": "ishoneypot.ton",
     "unicode": "ishoneypot.ton",
+    "address": "0:7e664d95714bd66e7674afd91087ec42d76c7f3a1861417e6ae1c00313719539",
     "accessible": true,
     "inStorage": false,
     "spamContent": false,
@@ -103,7 +109,7 @@ Get data about a random indexed site
 }
 ```
 
-### GET /sites
+### GET `/sites`
 List filtered data about indexed sites
 | query | type | note |
 | --- | --- | --- |
@@ -124,6 +130,7 @@ List filtered data about indexed sites
         {
             "domain": "ishoneypot.ton",
             "unicode": "ishoneypot.ton",
+            "address": "0:7e664d95714bd66e7674afd91087ec42d76c7f3a1861417e6ae1c00313719539",
             "accessible": true,
             "inStorage": false,
             "spamContent": false,

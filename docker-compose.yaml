@@ -7,6 +7,7 @@ services:
     restart: unless-stopped
     ports:
       - 8081:8081
+      - 8082:8082
     environment:
       DATABASE_URL: postgres://postgres@db:5432/tonsite?sslmode=disable
     depends_on:
