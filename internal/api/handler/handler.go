@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/oxylume/index/internal/db"
 	"github.com/oxylume/index/pkg/proxy"
@@ -25,7 +26,8 @@ func NewHandler(dns *dns.Client, bags *proxy.BagProvider, rldp *proxy.RLDPConnec
 	namespaces := make([]string, 0, len(zones)+len(specialNamespaces))
 	for _, zone := range zones {
 		zonesMap[zone] = struct{}{}
-		namespaces = append(namespaces, zone+".")
+		namespace := strings.ReplaceAll(zone, ".", "-") + "."
+		namespaces = append(namespaces, namespace)
 	}
 	namespaces = append(namespaces, specialNamespaces...)
 	return &Handler{
