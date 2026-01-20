@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 	"path/filepath"
@@ -148,7 +147,6 @@ func (h *Handler) ServeGateway(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) resolveRealHost(host string) (string, bool) {
 	for _, namespace := range h.namespaces {
-		log.Printf("host: %s    namespace: %s", host, namespace)
 		i := strings.Index(host, namespace)
 		if i < 0 {
 			continue
